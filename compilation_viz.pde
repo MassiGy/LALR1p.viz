@@ -95,10 +95,6 @@ assert content.length == 1 :
   tokens_stream = stream;
 }
 
-String sanitize_tokens_stream(String old_stream) {
-  return old_stream;
-}
-
 void draw_tokens_stream() {
   float xoffset = 40;
   float yoffset = 40;
@@ -145,7 +141,7 @@ void draw_compiler_stack() {
   float cellW = token_slot_width;
   float cellH = token_slot_width;
   float xoffset    = 40;
-  float yoffset = 40;
+  float yoffset = 80;
 
   float startY = height - yoffset - cellH;
 
@@ -157,6 +153,11 @@ void draw_compiler_stack() {
     fill(0);
     text(compiler_stack[i], xoffset + cellW/2, y + cellH/2);
   }
+  textSize(18);
+  fill(20);
+  text("Compiler stack", xoffset, height-0.5*yoffset );
+  noFill();
+  textSize(12);
 }
 
 void draw_stack_actions_history() {
