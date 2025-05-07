@@ -2,10 +2,10 @@ int head_index = 3;
 String[] tokens_stream;
 int tokens_stream_nb_spaces;
 
-int token_slot_width = 50;
+float token_slot_width = 50;
 
 
-String[] compiler_stack = {"$"};
+String[] compiler_stack = {"$", "F", "T"};
 
 int[][] compiler_matrix = {
   // -2 = empty cell
@@ -61,6 +61,7 @@ String[][] grammar_rhs = {
 void setup() {
   size(600, 600);
   read_input("input.txt");
+
   frameRate(30);
 }
 
@@ -93,10 +94,10 @@ String sanitize_tokens_stream(String old_stream) {
 }
 
 void draw_tokens_stream() {
-  int xoffset = 40;
-  int yoffset = 40;
-  int rect_width = tokens_stream.length * token_slot_width;
-  int headxoffset = token_slot_width /2;
+  float xoffset = 40;
+  float yoffset = 40;
+  float rect_width = tokens_stream.length * token_slot_width;
+  float headxoffset = token_slot_width /2;
 
   fill(191);
   rect(xoffset, yoffset, rect_width, yoffset);
@@ -129,13 +130,30 @@ assert head_index > 0 && head_index < tokens_stream.length:
 
 
 void draw_compiler_stack() {
-  int xoffset = 40;
-  int yoffset = 40;
-  int rect_height = compiler_stack.length * token_slot_width;
-  println("rect_height=", rect_height);
-  println("tl=", xoffset, height - yoffset -rect_height);
-  println("br=", xoffset+token_slot_width, height - yoffset);
-  fill(191);
-  rect( xoffset, height - 2*yoffset - rect_height, token_slot_width, height - 2*yoffset);
-  noFill();
+  float cellW = token_slot_width;
+  float cellH = token_slot_width;
+  float xoffset    = 40;
+  float yoffset = 40;
+  
+  float startY = height - yoffset - cellH;
+
+  for (int i = 0; i < compiler_stack.length; i++) {
+    float y = startY - i * cellH;
+    stroke(0);
+    noFill();
+    rect(xoffset, y, cellW, cellH);
+    fill(0);
+    text(compiler_stack[i], xoffset + cellW/2, y + cellH/2);
+  }
 }
+
+
+
+
+/*
+void keyPressed() {
+  if (key == CODED) {
+    if (keyCode == RIGHT && head_index < tokens_stream.length-1) head_index ++;
+    if (keyCode == LEFT  && head_index > 0)               head_index--;
+  }
+}*/
