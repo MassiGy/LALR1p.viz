@@ -1,4 +1,1 @@
-debut
-    a := 3;
-    b := a;
-fin
+debut a := 3 ; b := a ; fin
