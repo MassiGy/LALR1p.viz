@@ -9,7 +9,7 @@ float token_slot_width = 45;
 String[] compiler_stack = {"$", "F", "T"};
 
 int[][] compiler_matrix = {
-  // -2 = empty cell
+  // -2 = empty cell (error case)
   //  0 = word is accepted
   // -1 = pop from stack
   { 1, -2, -2, -2, -2, -2, -2, -2, -2, -2, -2},
@@ -65,7 +65,7 @@ String compiler_error;
 void setup() {
   size(1366, 768);
   read_input("input.txt");
-
+  init_compiler_stack();
   frameRate(30);
 }
 
@@ -77,6 +77,50 @@ void draw() {
   draw_compiler_stack();
   draw_stack_actions_history();
   draw_error();
+}
+void init_compiler_stack() {
+};
+void keyPressed() {
+  if (key == CODED && keyCode == RIGHT) {
+    // get token pointed by head;
+    String target_token = tokens_stream[head_index];
+
+    // get top of compiler stack
+    String top_compiler_stack = compiler_stack[compiler_stack.length-1];
+
+    // find row index corresponding to top_compiler_stack;
+    int rowindx=-1;
+    for (int i=0; i < compiler_matrix_rows.length; i++) {
+      if (compiler_matrix_rows[i] == top_compiler_stack)
+        rowindx = i;
+    }
+    assert rowindx!=-1;
+
+    // find col index corresponding to target token
+    int colindx=-1;
+    for (int i=0; i < compiler_matrix_cols.length; i++) {
+      if (compiler_matrix_cols[i] == target_token)
+        colindx = i;
+    }
+    assert colindx!=-1;
+
+
+    int next_action = compiler_matrix[rowindx][colindx];
+    switch(next_action) {
+    case 0: // word is accepted
+      
+      break;
+    case -1: // pop from the stack
+      
+      break;
+    case -2: // error occured
+      
+      break;
+    default: // update stack with next grammar rule
+      
+      
+    }
+  }
 }
 
 
@@ -195,15 +239,3 @@ void draw_error() {
   noFill();
   textSize(12);
 }
-
-
-
-
-/*
-void keyPressed() {
- if (key == CODED) {
- if (keyCode == RIGHT && head_index < tokens_stream.length-1) head_index ++;
- if (keyCode == LEFT  && head_index > 0)               head_index--;
- }
- }
- */
