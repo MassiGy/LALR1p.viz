@@ -1,12 +1,12 @@
-int head_index = 3;
+int head_index = 0;
 String[] tokens_stream;
 int tokens_stream_nb_spaces;
 
 float token_slot_width = 45;
 
 
-
-String[] compiler_stack = {"$", "F", "T"};
+boolean compilation_ended = false;
+String[] compiler_stack = {"$", "P"};
 
 int[][] compiler_matrix = {
   // -2 = empty cell (error case)
@@ -51,6 +51,9 @@ String[][] grammar_rhs = {
   {"€"},
   {"id", ":=", "E"},
   {"€"},
+  {"T", "E'"},
+  {"+","T", "E'"},
+  {"€"},
   {"F", "T'"},
   {"*", "F", "T'"},
   {"€"}, // € is for epsilon
@@ -59,14 +62,20 @@ String[][] grammar_rhs = {
   {"nb"}
 };
 
-String[] stack_actions_history = {"1", "pop", "acc"};
+String[] stack_actions_history = {};
 String compiler_error;
 
 void setup() {
   size(1366, 768);
   read_input("input.txt");
   init_compiler_stack();
-  frameRate(30);
+  println(get_next_action("P", "debut"));
+  println(get_next_action("S", "fin"));
+  println(get_next_action("T'", "fin"));
+  println(get_next_action("F", "id"));
+  println(get_next_action("$", "id"));
+  // the visualization is almost completely static, so reduce fps to save up machine power
+  frameRate(5);
 }
 
 
@@ -77,48 +86,68 @@ void draw() {
   draw_compiler_stack();
   draw_stack_actions_history();
   draw_error();
+
+
+
+  // freeze the screen, nothing to do anymore
+  if (compilation_ended)
+    noLoop();
 }
+
 void init_compiler_stack() {
 };
 void keyPressed() {
-  if (key == CODED && keyCode == RIGHT) {
+  if (key == CODED && keyCode == RIGHT && !compilation_ended) {
     // get token pointed by head;
     String target_token = tokens_stream[head_index];
 
+    println("target_token="+target_token+";");
+
     // get top of compiler stack
     String top_compiler_stack = compiler_stack[compiler_stack.length-1];
+    println("target_token="+target_token+";");
+    println("top_compiler_stack="+top_compiler_stack+";");
 
-    // find row index corresponding to top_compiler_stack;
-    int rowindx=-1;
-    for (int i=0; i < compiler_matrix_rows.length; i++) {
-      if (compiler_matrix_rows[i] == top_compiler_stack)
-        rowindx = i;
-    }
-    assert rowindx!=-1;
+    int next_action = get_next_action(top_compiler_stack, target_token);
 
-    // find col index corresponding to target token
-    int colindx=-1;
-    for (int i=0; i < compiler_matrix_cols.length; i++) {
-      if (compiler_matrix_cols[i] == target_token)
-        colindx = i;
-    }
-    assert colindx!=-1;
-
-
-    int next_action = compiler_matrix[rowindx][colindx];
     switch(next_action) {
     case 0: // word is accepted
-      
+      // push "Acc" to history stack
+      stack_actions_history= push2strArr(stack_actions_history, "Acc");
+      // end the compilation
+      compilation_ended = true;
+
       break;
-    case -1: // pop from the stack
-      
+    case -1:
+      // pop from the compiler stack
+      compiler_stack = popFromStrArr(compiler_stack);
+      // push "pop" to history stack
+      stack_actions_history= push2strArr(stack_actions_history, "Pop");
+
+      // move the head index to the right by 1;
+      head_index++;
+
+
       break;
-    case -2: // error occured
-      
+    case -2:
+      //println("rowindx=",rowindx, ";colindx=",colindx, ";next_action=", next_action);
+      // error occured
+      compiler_error="No appropriate next rule found.\n Please check if the input program follows the grammar accordingly.";
+      // end the compilation
+      compilation_ended = true;
+
       break;
-    default: // update stack with next grammar rule
-      
-      
+    default:
+      // pop the top of the compiler stack before updating it
+      compiler_stack = popFromStrArr(compiler_stack);
+
+      // update stack with next grammar rule
+      for (int i=grammar_rhs[next_action-1].length-1; i >= 0; i--) {
+        compiler_stack = push2strArr(compiler_stack, grammar_rhs[next_action-1][i]);
+      }
+
+      // push next_action to history stack
+      stack_actions_history= push2strArr(stack_actions_history, ""+next_action);
     }
   }
 }
@@ -163,7 +192,7 @@ void draw_tokens_stream() {
   noFill();
   textSize(12);
 
-assert head_index > 0 && head_index < tokens_stream.length:
+assert head_index >= 0 && head_index < tokens_stream.length:
   "Head index out of bounds";
 
   // draw the readhead
@@ -238,4 +267,47 @@ void draw_error() {
   text("Error:"+compiler_error, xoffset + headxoffset/2, height-yoffset);
   noFill();
   textSize(12);
+}
+
+
+
+String[] push2strArr(String[] arr, String val) {
+  String[] newArr = new String[arr.length+1];
+  for (int i=0; i < arr.length; i++) {
+    newArr[i] = arr[i];
+  }
+  newArr[arr.length]=val;
+  return newArr;
+}
+
+String[] popFromStrArr(String[] arr) {
+  String[] newArr = new String[arr.length-1];
+  for (int i=0; i < arr.length-1; i++) {
+    newArr[i] = arr[i];
+  }
+  return newArr;
+}
+
+int get_next_action(String top_compiler_stack, String target_token) {
+
+  // find row index corresponding to top_compiler_stack;
+  int rowindx=-1;
+  for (int i=0; i < compiler_matrix_rows.length; i++) {
+    if (compiler_matrix_rows[i].equals(top_compiler_stack))
+      rowindx = i;
+  }
+assert rowindx!=-1 :
+  "1";
+
+  // find col index corresponding to target token
+  int colindx=-1;
+  for (int i=0; i < compiler_matrix_cols.length; i++) {
+    if (compiler_matrix_cols[i].equals(target_token))
+      colindx = i;
+  }
+assert colindx!=-1 :
+  "2";
+
+
+  return compiler_matrix[rowindx][colindx];
 }

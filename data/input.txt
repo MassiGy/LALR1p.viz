@@ -1,1 +1,1 @@
-debut a := 3 ; b := a ; fin
+debut id := nb ; id := id ; fin
