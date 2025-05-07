@@ -52,7 +52,7 @@ String[][] grammar_rhs = {
   {"id", ":=", "E"},
   {"€"},
   {"T", "E'"},
-  {"+","T", "E'"},
+  {"+", "T", "E'"},
   {"€"},
   {"F", "T'"},
   {"*", "F", "T'"},
@@ -68,6 +68,7 @@ String compiler_error;
 void setup() {
   size(1366, 768);
   read_input("input.txt");
+  tokens_stream = push2strArr(tokens_stream, "€");
   init_compiler_stack();
   println(get_next_action("P", "debut"));
   println(get_next_action("S", "fin"));
@@ -108,6 +109,11 @@ void keyPressed() {
     println("target_token="+target_token+";");
     println("top_compiler_stack="+top_compiler_stack+";");
 
+
+    if (top_compiler_stack.equals("€") && compiler_stack.length > 2) {
+       compiler_stack = popFromStrArr(compiler_stack);
+       return;
+    }
     int next_action = get_next_action(top_compiler_stack, target_token);
 
     switch(next_action) {
@@ -228,7 +234,7 @@ void draw_compiler_stack() {
   }
   textSize(18);
   fill(20);
-  text("Compiler stack", xoffset, height-0.5*yoffset );
+  text("Compiler stack "+(compilation_ended ? "(compilation_ended)": "(compilation_not_ended)"), xoffset, height-0.5*yoffset );
   noFill();
   textSize(12);
 }
