@@ -2,7 +2,8 @@ int head_index = 3;
 String[] tokens_stream;
 int tokens_stream_nb_spaces;
 
-float token_slot_width = 50;
+float token_slot_width = 45;
+
 
 
 String[] compiler_stack = {"$", "F", "T"};
@@ -58,8 +59,11 @@ String[][] grammar_rhs = {
   {"nb"}
 };
 
+String[] stack_actions_history = {"1", "pop", "acc"};
+String compiler_error;
+
 void setup() {
-  size(600, 600);
+  size(1366, 768);
   read_input("input.txt");
 
   frameRate(30);
@@ -71,6 +75,8 @@ void draw() {
 
   draw_tokens_stream();
   draw_compiler_stack();
+  draw_stack_actions_history();
+  draw_error();
 }
 
 
@@ -111,6 +117,12 @@ void draw_tokens_stream() {
     noFill();
   }
 
+  textSize(18);
+  fill(20);
+  text("Tokens stream:", xoffset, 0.7*yoffset );
+  noFill();
+  textSize(12);
+
 assert head_index > 0 && head_index < tokens_stream.length:
   "Head index out of bounds";
 
@@ -134,7 +146,7 @@ void draw_compiler_stack() {
   float cellH = token_slot_width;
   float xoffset    = 40;
   float yoffset = 40;
-  
+
   float startY = height - yoffset - cellH;
 
   for (int i = 0; i < compiler_stack.length; i++) {
@@ -147,13 +159,50 @@ void draw_compiler_stack() {
   }
 }
 
+void draw_stack_actions_history() {
+  float xoffset = 80 + tokens_stream.length * token_slot_width ;
+  float yoffset = 40;
+  float rect_width = stack_actions_history.length * token_slot_width;
+  float headxoffset = token_slot_width /2;
+
+  fill(191);
+  rect(xoffset, yoffset, rect_width, yoffset);
+  noFill();
+
+  for (int i=0; i < stack_actions_history.length; i++) {
+    fill(230);
+    rect(xoffset + i * token_slot_width, yoffset, token_slot_width, yoffset);
+    fill(0);
+    text(stack_actions_history[i], xoffset + i * token_slot_width + headxoffset/2, 1.6 * yoffset );
+    noFill();
+  }
+  textSize(18);
+  fill(20);
+  text("On stack actions history:", xoffset, 0.7*yoffset );
+  noFill();
+  textSize(12);
+}
+
+void draw_error() {
+  float xoffset = 90 + tokens_stream.length * token_slot_width ;
+  float yoffset = 40;
+  float headxoffset = token_slot_width /2;
+
+  textSize(18);
+  fill(200, 0, 0);
+  text("Error:"+compiler_error, xoffset + headxoffset/2, height-yoffset);
+  noFill();
+  textSize(12);
+}
+
 
 
 
 /*
 void keyPressed() {
-  if (key == CODED) {
-    if (keyCode == RIGHT && head_index < tokens_stream.length-1) head_index ++;
-    if (keyCode == LEFT  && head_index > 0)               head_index--;
-  }
-}*/
+ if (key == CODED) {
+ if (keyCode == RIGHT && head_index < tokens_stream.length-1) head_index ++;
+ if (keyCode == LEFT  && head_index > 0)               head_index--;
+ }
+ }
+ */
