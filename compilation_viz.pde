@@ -111,8 +111,8 @@ void keyPressed() {
 
 
     if (top_compiler_stack.equals("€") && compiler_stack.length > 2) {
-       compiler_stack = popFromStrArr(compiler_stack);
-       return;
+      compiler_stack = popFromStrArr(compiler_stack);
+      return;
     }
     int next_action = get_next_action(top_compiler_stack, target_token);
 
@@ -245,17 +245,38 @@ void draw_stack_actions_history() {
   float rect_width = stack_actions_history.length * token_slot_width;
   float headxoffset = token_slot_width /2;
 
-  fill(191);
-  rect(xoffset, yoffset, rect_width, yoffset);
-  noFill();
+  //fill(191);
+  //rect(xoffset, yoffset, rect_width, yoffset);
+  //noFill();
 
-  for (int i=0; i < stack_actions_history.length; i++) {
-    fill(230);
-    rect(xoffset + i * token_slot_width, yoffset, token_slot_width, yoffset);
-    fill(0);
-    text(stack_actions_history[i], xoffset + i * token_slot_width + headxoffset/2, 1.6 * yoffset );
-    noFill();
+  int stagescount = stack_actions_history.length /10;
+
+  for (int j=0; j < stagescount; j++) {
+
+    for (int i=0; i < 10; i++) {
+      fill(230);
+      rect(xoffset + i * token_slot_width, yoffset, token_slot_width, yoffset  );
+      fill(0);
+      text(stack_actions_history[i+j*10], xoffset + i * token_slot_width + headxoffset/2, 1.6 * yoffset );
+      noFill();
+    }
+    yoffset*=2;
   }
+
+  int slots_count =  stack_actions_history.length;
+  int i = 0;
+  while (i < slots_count) {
+    for (; i < i+10; i++) {
+      fill(230);
+      rect(xoffset + i * token_slot_width, yoffset, token_slot_width, yoffset  );
+      fill(0);
+      text(stack_actions_history[i+j*10], xoffset + i * token_slot_width + headxoffset/2, 1.6 * yoffset );
+      noFill();
+    }
+  }
+
+
+
   textSize(18);
   fill(20);
   text("On stack actions history:", xoffset, 0.7*yoffset );
