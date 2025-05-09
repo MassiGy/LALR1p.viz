@@ -265,7 +265,7 @@ void draw_stack_actions_history() {
 
   int slots_count =  stack_actions_history.length;
   int i = 0;
-  while (i < slots_count) {
+  while (slots_count > 0) {
     for (; i < i+10; i++) {
       fill(230);
       rect(xoffset + i * token_slot_width, yoffset, token_slot_width, yoffset  );
