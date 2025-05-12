@@ -1,3 +1,8 @@
+/**
+  @author: Massiles GHERNAOUT.
+*/
+
+
 int head_index = 0;
 String[] tokens_stream;
 int tokens_stream_nb_spaces;
@@ -69,12 +74,7 @@ void setup() {
   size(1366, 768);
   read_input("input.txt");
   tokens_stream = push2strArr(tokens_stream, "€");
-  init_compiler_stack();
-  println(get_next_action("P", "debut"));
-  println(get_next_action("S", "fin"));
-  println(get_next_action("T'", "fin"));
-  println(get_next_action("F", "id"));
-  println(get_next_action("$", "id"));
+  
   // the visualization is almost completely static, so reduce fps to save up machine power
   frameRate(5);
 }
@@ -88,27 +88,19 @@ void draw() {
   draw_stack_actions_history();
   draw_error();
 
-
-
   // freeze the screen, nothing to do anymore
   if (compilation_ended)
     noLoop();
 }
 
-void init_compiler_stack() {
-};
 void keyPressed() {
   if (key == CODED && keyCode == RIGHT && !compilation_ended) {
     // get token pointed by head;
     String target_token = tokens_stream[head_index];
 
-    println("target_token="+target_token+";");
-
     // get top of compiler stack
     String top_compiler_stack = compiler_stack[compiler_stack.length-1];
-    println("target_token="+target_token+";");
-    println("top_compiler_stack="+top_compiler_stack+";");
-
+   
 
     if (top_compiler_stack.equals("€") && compiler_stack.length > 2) {
       compiler_stack = popFromStrArr(compiler_stack);
@@ -217,72 +209,56 @@ assert head_index >= 0 && head_index < tokens_stream.length:
 
 
 void draw_compiler_stack() {
-  float cellW = token_slot_width;
-  float cellH = token_slot_width;
+  float slot_width = token_slot_width;
+  float slot_height = token_slot_width;
   float xoffset    = 40;
-  float yoffset = 80;
+  float yoffset = height - slot_height - 80;
 
-  float startY = height - yoffset - cellH;
 
   for (int i = 0; i < compiler_stack.length; i++) {
-    float y = startY - i * cellH;
+    float y = yoffset - i * slot_height;
     stroke(0);
     noFill();
-    rect(xoffset, y, cellW, cellH);
+    rect(xoffset, y, slot_width, slot_height);
     fill(0);
-    text(compiler_stack[i], xoffset + cellW/2, y + cellH/2);
+    text(compiler_stack[i], xoffset + slot_width/2, y + slot_height/2);
   }
+
+  yoffset = 80;
   textSize(18);
   fill(20);
-  text("Compiler stack "+(compilation_ended ? "(compilation_ended)": "(compilation_not_ended)"), xoffset, height-0.5*yoffset );
+  text("Compiler stack "+(compilation_ended ? "(compilation_ended).": "(ongoing_compilation)."), xoffset, height-0.5*yoffset );
+  text("> Hit Right-Arrow to move on the compilation.", xoffset, height - 0.25 * yoffset);
   noFill();
   textSize(12);
 }
 
 void draw_stack_actions_history() {
-  float xoffset = 80 + tokens_stream.length * token_slot_width ;
+  float xoffset = 80 + tokens_stream.length * token_slot_width;
   float yoffset = 40;
-  float rect_width = stack_actions_history.length * token_slot_width;
-  float headxoffset = token_slot_width /2;
+  int items_per_row = 10;
+  float headxoffset = token_slot_width / 2;
 
-  //fill(191);
-  //rect(xoffset, yoffset, rect_width, yoffset);
-  //noFill();
 
-  int stagescount = stack_actions_history.length /10;
+  for (int i = 0; i < stack_actions_history.length; i++) {
+    int row = i / items_per_row;  // Determine which row the element belongs to.
+    int col = i % items_per_row;  // Determine the column in the row.
 
-  for (int j=0; j < stagescount; j++) {
+    fill(230);
+    rect(xoffset + col * token_slot_width, yoffset + row * yoffset, token_slot_width, yoffset);
 
-    for (int i=0; i < 10; i++) {
-      fill(230);
-      rect(xoffset + i * token_slot_width, yoffset, token_slot_width, yoffset  );
-      fill(0);
-      text(stack_actions_history[i+j*10], xoffset + i * token_slot_width + headxoffset/2, 1.6 * yoffset );
-      noFill();
-    }
-    yoffset*=2;
+    fill(0);
+    text(stack_actions_history[i], xoffset + col * token_slot_width + headxoffset / 2, yoffset + row *  yoffset + 0.6 * yoffset);
+    noFill();
   }
-
-  int slots_count =  stack_actions_history.length;
-  int i = 0;
-  while (slots_count > 0) {
-    for (; i < i+10; i++) {
-      fill(230);
-      rect(xoffset + i * token_slot_width, yoffset, token_slot_width, yoffset  );
-      fill(0);
-      text(stack_actions_history[i+j*10], xoffset + i * token_slot_width + headxoffset/2, 1.6 * yoffset );
-      noFill();
-    }
-  }
-
-
 
   textSize(18);
   fill(20);
-  text("On stack actions history:", xoffset, 0.7*yoffset );
+  text("On stack actions history:", xoffset, 0.7* yoffset);
   noFill();
   textSize(12);
 }
+
 
 void draw_error() {
   float xoffset = 90 + tokens_stream.length * token_slot_width ;
@@ -296,6 +272,31 @@ void draw_error() {
   textSize(12);
 }
 
+
+
+int get_next_action(String top_compiler_stack, String target_token) {
+
+  // find row index corresponding to top_compiler_stack;
+  int rowindx=-1;
+  for (int i=0; i < compiler_matrix_rows.length; i++) {
+    if (compiler_matrix_rows[i].equals(top_compiler_stack))
+      rowindx = i;
+  }
+assert rowindx!=-1 :
+  "new action row index must be initialized.";
+
+  // find col index corresponding to target token
+  int colindx=-1;
+  for (int i=0; i < compiler_matrix_cols.length; i++) {
+    if (compiler_matrix_cols[i].equals(target_token))
+      colindx = i;
+  }
+assert colindx!=-1 :
+  "new action col index must be initialized.";
+
+
+  return compiler_matrix[rowindx][colindx];
+}
 
 
 String[] push2strArr(String[] arr, String val) {
@@ -313,28 +314,4 @@ String[] popFromStrArr(String[] arr) {
     newArr[i] = arr[i];
   }
   return newArr;
-}
-
-int get_next_action(String top_compiler_stack, String target_token) {
-
-  // find row index corresponding to top_compiler_stack;
-  int rowindx=-1;
-  for (int i=0; i < compiler_matrix_rows.length; i++) {
-    if (compiler_matrix_rows[i].equals(top_compiler_stack))
-      rowindx = i;
-  }
-assert rowindx!=-1 :
-  "1";
-
-  // find col index corresponding to target token
-  int colindx=-1;
-  for (int i=0; i < compiler_matrix_cols.length; i++) {
-    if (compiler_matrix_cols[i].equals(target_token))
-      colindx = i;
-  }
-assert colindx!=-1 :
-  "2";
-
-
-  return compiler_matrix[rowindx][colindx];
 }
