@@ -73,7 +73,7 @@ String compiler_hint;
 
 void setup() {
   size(1366, 768);
-  read_input("input3.txt");
+  read_input("input6.txt");
   tokens_stream = push2strArr(tokens_stream, "€");
 
   // the visualization is almost completely static, so reduce fps to save up machine power
