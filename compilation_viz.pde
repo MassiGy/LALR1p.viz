@@ -1,6 +1,6 @@
 /**
-  @author: Massiles GHERNAOUT.
-*/
+ @author: Massiles GHERNAOUT.
+ */
 
 
 int head_index = 0;
@@ -69,12 +69,13 @@ String[][] grammar_rhs = {
 
 String[] stack_actions_history = {};
 String compiler_error;
+String compiler_hint;
 
 void setup() {
   size(1366, 768);
-  read_input("input.txt");
+  read_input("input3.txt");
   tokens_stream = push2strArr(tokens_stream, "€");
-  
+
   // the visualization is almost completely static, so reduce fps to save up machine power
   frameRate(5);
 }
@@ -87,6 +88,7 @@ void draw() {
   draw_compiler_stack();
   draw_stack_actions_history();
   draw_error();
+  draw_hint();
 
   // freeze the screen, nothing to do anymore
   if (compilation_ended)
@@ -100,7 +102,7 @@ void keyPressed() {
 
     // get top of compiler stack
     String top_compiler_stack = compiler_stack[compiler_stack.length-1];
-   
+
 
     if (top_compiler_stack.equals("€") && compiler_stack.length > 2) {
       compiler_stack = popFromStrArr(compiler_stack);
@@ -128,9 +130,14 @@ void keyPressed() {
 
       break;
     case -2:
-      //println("rowindx=",rowindx, ";colindx=",colindx, ";next_action=", next_action);
+      
+      
       // error occured
-      compiler_error="No appropriate next rule found.\n Please check if the input program follows the grammar accordingly.";
+      compiler_error="No appropriate next rule found.\nPlease check if the input program follows the grammar accordingly.";
+      
+      // generate hint for the user;
+      generate_hints(top_compiler_stack, target_token);
+      
       // end the compilation
       compilation_ended = true;
 
@@ -154,7 +161,7 @@ void keyPressed() {
 void read_input(String filename) {
   String[] content = loadStrings(filename);
 assert content.length == 1 :
-  "Wrong input.";
+  "Wrong input format. Please check out the readme.";
 
   String[] stream = split(content[0], ' ');
   println("Tokens:___");
@@ -209,7 +216,7 @@ assert head_index >= 0 && head_index < tokens_stream.length:
 
 
 void draw_compiler_stack() {
-  float slot_width = token_slot_width;
+  float slot_width = token_slot_width * 1.1;
   float slot_height = token_slot_width;
   float xoffset    = 40;
   float yoffset = height - slot_height - 80;
@@ -221,7 +228,7 @@ void draw_compiler_stack() {
     noFill();
     rect(xoffset, y, slot_width, slot_height);
     fill(0);
-    text(compiler_stack[i], xoffset + slot_width/2, y + slot_height/2);
+    text(compiler_stack[i], xoffset + slot_width/2 - 10, y + slot_height/2);
   }
 
   yoffset = 80;
@@ -234,7 +241,7 @@ void draw_compiler_stack() {
 }
 
 void draw_stack_actions_history() {
-  float xoffset = 80 + tokens_stream.length * token_slot_width;
+  float xoffset = width/2;
   float yoffset = 40;
   int items_per_row = 10;
   float headxoffset = token_slot_width / 2;
@@ -261,29 +268,48 @@ void draw_stack_actions_history() {
 
 
 void draw_error() {
-  float xoffset = 90 + tokens_stream.length * token_slot_width ;
+  float xoffset = width/2;
+
   float yoffset = 40;
   float headxoffset = token_slot_width /2;
 
+
   textSize(18);
   fill(200, 0, 0);
-  text("Error:"+compiler_error, xoffset + headxoffset/2, height-yoffset);
+  text("Error: "+compiler_error, xoffset + headxoffset/2, height-yoffset);
   noFill();
   textSize(12);
 }
 
+void draw_hint() {
+  if(compiler_hint == null)
+    return;
+    
+    
+  float xoffset = width/2;
 
+  float yoffset = 100;
+  float headxoffset = token_slot_width /2;
 
-int get_next_action(String top_compiler_stack, String target_token) {
+  
+  textSize(18);
+  fill(0, 0, 200);
+  text("Hint: "+compiler_hint, xoffset + headxoffset/2, height-yoffset);
+  noFill();
+  textSize(12);
+}
 
+int get_rowindx_for_next_action(String top_compiler_stack) {
   // find row index corresponding to top_compiler_stack;
   int rowindx=-1;
   for (int i=0; i < compiler_matrix_rows.length; i++) {
     if (compiler_matrix_rows[i].equals(top_compiler_stack))
       rowindx = i;
   }
-assert rowindx!=-1 :
-  "new action row index must be initialized.";
+  return rowindx;
+}
+
+int get_colindx_for_next_action(String target_token) {
 
   // find col index corresponding to target token
   int colindx=-1;
@@ -291,11 +317,58 @@ assert rowindx!=-1 :
     if (compiler_matrix_cols[i].equals(target_token))
       colindx = i;
   }
-assert colindx!=-1 :
-  "new action col index must be initialized.";
+  return colindx;
+}
 
 
+int get_next_action(String top_compiler_stack, String target_token) {
+
+  int rowindx= get_rowindx_for_next_action(top_compiler_stack);
+  if (rowindx == -1) {
+    return -2;
+  }
+
+  int colindx= get_colindx_for_next_action(target_token);
+  if (colindx == -1) {
+    return -2;
+  }
   return compiler_matrix[rowindx][colindx];
+}
+
+void generate_hints(String top_compiler_stack, String target_token) {
+
+  int rowindx= get_rowindx_for_next_action(top_compiler_stack);
+  if (rowindx == -1) {
+    compiler_hint = "Unkown next rule. The rule at the top of the compiler stack is not in the grammar.\n";
+    return;
+  }
+
+  int colindx= get_colindx_for_next_action(target_token);
+  if (colindx == -1) {
+    compiler_hint = "Unkown next token. The token pointed by the head is not in the grammar.\n";
+    return;
+  }
+
+  
+  if (compiler_matrix[rowindx][colindx] == -2) {
+    String hint = "Expected tokens { ";
+    for (int i = 0; i < compiler_matrix[rowindx].length; i++) {
+      if (compiler_matrix[rowindx][i] != -2) {
+        // add this token to the expected tokens set
+        hint+= compiler_matrix_cols[i];
+        if (i < compiler_matrix[rowindx].length-1) {
+          hint+="    ";
+        }
+      }
+    }
+
+    hint+= "}, but got: { " + (target_token.equals(" ") ? "<space>" : target_token )+" }.";
+    compiler_hint = hint;
+    return;
+  }
+
+  compiler_hint = "Please reverify the grammar of your input. \n(default hint, failed to generate a specific one).";
+  return;
 }
 
 
