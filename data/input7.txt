@@ -1,0 +1,1 @@
+debut id := nb ; id := id + nb ; id := id + nb ; fin

@@ -73,7 +73,7 @@ String compiler_hint;
 
 void setup() {
   size(1366, 768);
-  read_input("input6.txt");
+  read_input("input7.txt");
   tokens_stream = push2strArr(tokens_stream, "€");
 
   // the visualization is almost completely static, so reduce fps to save up machine power
@@ -130,14 +130,14 @@ void keyPressed() {
 
       break;
     case -2:
-      
-      
+
+
       // error occured
       compiler_error="No appropriate next rule found.\nPlease check if the input program follows the grammar accordingly.";
-      
+
       // generate hint for the user;
       generate_hints(top_compiler_stack, target_token);
-      
+
       // end the compilation
       compilation_ended = true;
 
@@ -176,21 +176,21 @@ assert content.length == 1 :
 void draw_tokens_stream() {
   float xoffset = 40;
   float yoffset = 40;
-  float rect_width = tokens_stream.length * token_slot_width;
-  float headxoffset = token_slot_width /2;
+  int items_per_row = 10;
+  float headxoffset = token_slot_width / 2;
 
-  fill(191);
-  rect(xoffset, yoffset, rect_width, yoffset);
-  noFill();
 
-  for (int i=0; i < tokens_stream.length; i++) {
+  for (int i = 0; i < tokens_stream.length; i++) {
+    int row = i / items_per_row;  // Determine which row the element belongs to.
+    int col = i % items_per_row;  // Determine the column in the row.
+
     fill(230);
-    rect(xoffset + i * token_slot_width, yoffset, token_slot_width, yoffset);
+    rect(xoffset + col * token_slot_width, yoffset + row * yoffset, token_slot_width, yoffset);
+
     fill(0);
-    text(tokens_stream[i], xoffset + i * token_slot_width + headxoffset/2, 1.6 * yoffset );
+    text(tokens_stream[i], xoffset + col * token_slot_width + headxoffset / 2, yoffset + row *  yoffset + 0.6 * yoffset);
     noFill();
   }
-
   textSize(18);
   fill(20);
   text("Tokens stream:", xoffset, 0.7*yoffset );
@@ -282,16 +282,16 @@ void draw_error() {
 }
 
 void draw_hint() {
-  if(compiler_hint == null)
+  if (compiler_hint == null)
     return;
-    
-    
+
+
   float xoffset = width/2;
 
   float yoffset = 100;
   float headxoffset = token_slot_width /2;
 
-  
+
   textSize(18);
   fill(0, 0, 200);
   text("Hint: "+compiler_hint, xoffset + headxoffset/2, height-yoffset);
@@ -349,7 +349,7 @@ void generate_hints(String top_compiler_stack, String target_token) {
     return;
   }
 
-  
+
   if (compiler_matrix[rowindx][colindx] == -2) {
     String hint = "Expected tokens { ";
     for (int i = 0; i < compiler_matrix[rowindx].length; i++) {
@@ -388,4 +388,3 @@ String[] popFromStrArr(String[] arr) {
   }
   return newArr;
 }
-  
