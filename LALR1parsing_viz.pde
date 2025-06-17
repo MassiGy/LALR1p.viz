@@ -10,10 +10,10 @@ int tokens_stream_nb_spaces;
 float token_slot_width = 45;
 
 
-boolean compilation_ended = false;
-String[] compiler_stack = {"$", "P"};
+boolean parsing_ended = false;
+String[] LALR1p_stack = {"$", "P"};
 
-int[][] compiler_matrix = {
+int[][] LALR1p_matrix = {
   // -2 = empty cell (error case)
   //  0 = word is accepted
   // -1 = pop from stack
@@ -41,10 +41,10 @@ int[][] compiler_matrix = {
   {-2, -2, -2, -2, -2, -2, -2, -2, -2, -2, -1},
 };
 
-String[] compiler_matrix_cols = {
+String[] LALR1p_matrix_cols = {
   "debut", "fin", ";", "id", ":=", "+", "*", "(", ")", "nb", "€"
 };
-String[] compiler_matrix_rows = {
+String[] LALR1p_matrix_rows = {
   "P", "S", "R", "I", "E", "E'", "T", "T'", "F", "$",
   "debut", "fin", ";", "id", ":=", "+", "*", "(", ")", "nb"
 };
@@ -68,12 +68,12 @@ String[][] grammar_rhs = {
 };
 
 String[] stack_actions_history = {};
-String compiler_error;
-String compiler_hint;
+String LALR1p_error;
+String LALR1p_hint;
 
 void setup() {
   size(1366, 768);
-  read_input("input7.txt");
+  read_input("input2.txt");
   tokens_stream = push2strArr(tokens_stream, "€");
 
   // the visualization is almost completely static, so reduce fps to save up machine power
@@ -85,42 +85,42 @@ void draw() {
   background(255);
 
   draw_tokens_stream();
-  draw_compiler_stack();
+  draw_LALR1p_stack();
   draw_stack_actions_history();
   draw_error();
   draw_hint();
 
   // freeze the screen, nothing to do anymore
-  if (compilation_ended)
+  if (parsing_ended)
     noLoop();
 }
 
 void keyPressed() {
-  if (key == CODED && keyCode == RIGHT && !compilation_ended) {
+  if (key == CODED && keyCode == RIGHT && !parsing_ended) {
     // get token pointed by head;
     String target_token = tokens_stream[head_index];
 
-    // get top of compiler stack
-    String top_compiler_stack = compiler_stack[compiler_stack.length-1];
+    // get top of LALR1p stack
+    String top_LALR1p_stack = LALR1p_stack[LALR1p_stack.length-1];
 
 
-    if (top_compiler_stack.equals("€") && compiler_stack.length > 2) {
-      compiler_stack = popFromStrArr(compiler_stack);
+    if (top_LALR1p_stack.equals("€") && LALR1p_stack.length > 2) {
+      LALR1p_stack = popFromStrArr(LALR1p_stack);
       return;
     }
-    int next_action = get_next_action(top_compiler_stack, target_token);
+    int next_action = get_next_action(top_LALR1p_stack, target_token);
 
     switch(next_action) {
     case 0: // word is accepted
       // push "Acc" to history stack
       stack_actions_history= push2strArr(stack_actions_history, "Acc");
-      // end the compilation
-      compilation_ended = true;
+      // end the parsing
+      parsing_ended = true;
 
       break;
     case -1:
-      // pop from the compiler stack
-      compiler_stack = popFromStrArr(compiler_stack);
+      // pop from the LALR1p stack
+      LALR1p_stack = popFromStrArr(LALR1p_stack);
       // push "pop" to history stack
       stack_actions_history= push2strArr(stack_actions_history, "Pop");
 
@@ -133,22 +133,22 @@ void keyPressed() {
 
 
       // error occured
-      compiler_error="No appropriate next rule found.\nPlease check if the input program follows the grammar accordingly.";
+      LALR1p_error="No appropriate next rule found.\nPlease check if the input program follows the grammar accordingly.";
 
       // generate hint for the user;
-      generate_hints(top_compiler_stack, target_token);
+      generate_hints(top_LALR1p_stack, target_token);
 
-      // end the compilation
-      compilation_ended = true;
+      // end the parsing
+      parsing_ended = true;
 
       break;
     default:
-      // pop the top of the compiler stack before updating it
-      compiler_stack = popFromStrArr(compiler_stack);
+      // pop the top of the LALR1p stack before updating it
+      LALR1p_stack = popFromStrArr(LALR1p_stack);
 
       // update stack with next grammar rule
       for (int i=grammar_rhs[next_action-1].length-1; i >= 0; i--) {
-        compiler_stack = push2strArr(compiler_stack, grammar_rhs[next_action-1][i]);
+        LALR1p_stack = push2strArr(LALR1p_stack, grammar_rhs[next_action-1][i]);
       }
 
       // push next_action to history stack
@@ -215,27 +215,27 @@ assert head_index >= 0 && head_index < tokens_stream.length:
 }
 
 
-void draw_compiler_stack() {
+void draw_LALR1p_stack() {
   float slot_width = token_slot_width * 1.1;
   float slot_height = token_slot_width;
   float xoffset    = 40;
   float yoffset = height - slot_height - 80;
 
 
-  for (int i = 0; i < compiler_stack.length; i++) {
+  for (int i = 0; i < LALR1p_stack.length; i++) {
     float y = yoffset - i * slot_height;
     stroke(0);
     noFill();
     rect(xoffset, y, slot_width, slot_height);
     fill(0);
-    text(compiler_stack[i], xoffset + slot_width/2 - 10, y + slot_height/2);
+    text(LALR1p_stack[i], xoffset + slot_width/2 - 10, y + slot_height/2);
   }
 
   yoffset = 80;
   textSize(18);
   fill(20);
-  text("Compiler stack "+(compilation_ended ? "(compilation_ended).": "(ongoing_compilation)."), xoffset, height-0.5*yoffset );
-  text("> Hit Right-Arrow to move on the compilation.", xoffset, height - 0.25 * yoffset);
+  text("LALR1p stack "+(parsing_ended ? "(parsing_ended).": "(ongoing_parsing)."), xoffset, height-0.5*yoffset );
+  text("> Hit Right-Arrow to move on the parsing.", xoffset, height - 0.25 * yoffset);
   noFill();
   textSize(12);
 }
@@ -276,13 +276,13 @@ void draw_error() {
 
   textSize(18);
   fill(200, 0, 0);
-  text("Error: "+compiler_error, xoffset + headxoffset/2, height-yoffset);
+  text("Error: "+LALR1p_error, xoffset + headxoffset/2, height-yoffset);
   noFill();
   textSize(12);
 }
 
 void draw_hint() {
-  if (compiler_hint == null)
+  if (LALR1p_hint == null)
     return;
 
 
@@ -294,16 +294,16 @@ void draw_hint() {
 
   textSize(18);
   fill(0, 0, 200);
-  text("Hint: "+compiler_hint, xoffset + headxoffset/2, height-yoffset);
+  text("Hint: "+LALR1p_hint, xoffset + headxoffset/2, height-yoffset);
   noFill();
   textSize(12);
 }
 
-int get_rowindx_for_next_action(String top_compiler_stack) {
-  // find row index corresponding to top_compiler_stack;
+int get_rowindx_for_next_action(String top_LALR1p_stack) {
+  // find row index corresponding to top_LALR1p_stack;
   int rowindx=-1;
-  for (int i=0; i < compiler_matrix_rows.length; i++) {
-    if (compiler_matrix_rows[i].equals(top_compiler_stack))
+  for (int i=0; i < LALR1p_matrix_rows.length; i++) {
+    if (LALR1p_matrix_rows[i].equals(top_LALR1p_stack))
       rowindx = i;
   }
   return rowindx;
@@ -313,17 +313,17 @@ int get_colindx_for_next_action(String target_token) {
 
   // find col index corresponding to target token
   int colindx=-1;
-  for (int i=0; i < compiler_matrix_cols.length; i++) {
-    if (compiler_matrix_cols[i].equals(target_token))
+  for (int i=0; i < LALR1p_matrix_cols.length; i++) {
+    if (LALR1p_matrix_cols[i].equals(target_token))
       colindx = i;
   }
   return colindx;
 }
 
 
-int get_next_action(String top_compiler_stack, String target_token) {
+int get_next_action(String top_LALR1p_stack, String target_token) {
 
-  int rowindx= get_rowindx_for_next_action(top_compiler_stack);
+  int rowindx= get_rowindx_for_next_action(top_LALR1p_stack);
   if (rowindx == -1) {
     return -2;
   }
@@ -332,42 +332,42 @@ int get_next_action(String top_compiler_stack, String target_token) {
   if (colindx == -1) {
     return -2;
   }
-  return compiler_matrix[rowindx][colindx];
+  return LALR1p_matrix[rowindx][colindx];
 }
 
-void generate_hints(String top_compiler_stack, String target_token) {
+void generate_hints(String top_LALR1p_stack, String target_token) {
 
-  int rowindx= get_rowindx_for_next_action(top_compiler_stack);
+  int rowindx= get_rowindx_for_next_action(top_LALR1p_stack);
   if (rowindx == -1) {
-    compiler_hint = "Unkown next rule. The rule at the top of the compiler stack is not in the grammar.\n";
+    LALR1p_hint = "Unkown next rule. The rule at the top of the LALR1p stack is not in the grammar.\n";
     return;
   }
 
   int colindx= get_colindx_for_next_action(target_token);
   if (colindx == -1) {
-    compiler_hint = "Unkown next token. The token pointed by the head is not in the grammar.\n";
+    LALR1p_hint = "Unkown next token. The token pointed by the head is not in the grammar.\n";
     return;
   }
 
 
-  if (compiler_matrix[rowindx][colindx] == -2) {
+  if (LALR1p_matrix[rowindx][colindx] == -2) {
     String hint = "Expected tokens { ";
-    for (int i = 0; i < compiler_matrix[rowindx].length; i++) {
-      if (compiler_matrix[rowindx][i] != -2) {
+    for (int i = 0; i < LALR1p_matrix[rowindx].length; i++) {
+      if (LALR1p_matrix[rowindx][i] != -2) {
         // add this token to the expected tokens set
-        hint+= compiler_matrix_cols[i];
-        if (i < compiler_matrix[rowindx].length-1) {
+        hint+= LALR1p_matrix_cols[i];
+        if (i < LALR1p_matrix[rowindx].length-1) {
           hint+="    ";
         }
       }
     }
 
     hint+= "}, but got: { " + (target_token.equals(" ") ? "<space>" : target_token )+" }.";
-    compiler_hint = hint;
+    LALR1p_hint = hint;
     return;
   }
 
-  compiler_hint = "Please reverify the grammar of your input. \n(default hint, failed to generate a specific one).";
+  LALR1p_hint = "Please reverify the grammar of your input. \n(default hint, failed to generate a specific one).";
   return;
 }
 
