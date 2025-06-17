@@ -13,7 +13,7 @@ float token_slot_width = 45;
 boolean parsing_ended = false;
 String[] LALR1p_stack = {"$", "P"};
 
-int[][] LALR1p_matrix = {
+int[][] LALR1p_table = {
   // -2 = empty cell (error case)
   //  0 = word is accepted
   // -1 = pop from stack
@@ -41,10 +41,10 @@ int[][] LALR1p_matrix = {
   {-2, -2, -2, -2, -2, -2, -2, -2, -2, -2, -1},
 };
 
-String[] LALR1p_matrix_cols = {
+String[] LALR1p_table_cols = {
   "debut", "fin", ";", "id", ":=", "+", "*", "(", ")", "nb", "€"
 };
-String[] LALR1p_matrix_rows = {
+String[] LALR1p_table_rows = {
   "P", "S", "R", "I", "E", "E'", "T", "T'", "F", "$",
   "debut", "fin", ";", "id", ":=", "+", "*", "(", ")", "nb"
 };
@@ -73,7 +73,7 @@ String LALR1p_hint;
 
 void setup() {
   size(1366, 768);
-  read_input("input2.txt");
+  read_input("input4.txt");
   tokens_stream = push2strArr(tokens_stream, "€");
 
   // the visualization is almost completely static, so reduce fps to save up machine power
@@ -302,8 +302,8 @@ void draw_hint() {
 int get_rowindx_for_next_action(String top_LALR1p_stack) {
   // find row index corresponding to top_LALR1p_stack;
   int rowindx=-1;
-  for (int i=0; i < LALR1p_matrix_rows.length; i++) {
-    if (LALR1p_matrix_rows[i].equals(top_LALR1p_stack))
+  for (int i=0; i < LALR1p_table_rows.length; i++) {
+    if (LALR1p_table_rows[i].equals(top_LALR1p_stack))
       rowindx = i;
   }
   return rowindx;
@@ -313,8 +313,8 @@ int get_colindx_for_next_action(String target_token) {
 
   // find col index corresponding to target token
   int colindx=-1;
-  for (int i=0; i < LALR1p_matrix_cols.length; i++) {
-    if (LALR1p_matrix_cols[i].equals(target_token))
+  for (int i=0; i < LALR1p_table_cols.length; i++) {
+    if (LALR1p_table_cols[i].equals(target_token))
       colindx = i;
   }
   return colindx;
@@ -332,7 +332,7 @@ int get_next_action(String top_LALR1p_stack, String target_token) {
   if (colindx == -1) {
     return -2;
   }
-  return LALR1p_matrix[rowindx][colindx];
+  return LALR1p_table[rowindx][colindx];
 }
 
 void generate_hints(String top_LALR1p_stack, String target_token) {
@@ -350,13 +350,13 @@ void generate_hints(String top_LALR1p_stack, String target_token) {
   }
 
 
-  if (LALR1p_matrix[rowindx][colindx] == -2) {
+  if (LALR1p_table[rowindx][colindx] == -2) {
     String hint = "Expected tokens { ";
-    for (int i = 0; i < LALR1p_matrix[rowindx].length; i++) {
-      if (LALR1p_matrix[rowindx][i] != -2) {
+    for (int i = 0; i < LALR1p_table[rowindx].length; i++) {
+      if (LALR1p_table[rowindx][i] != -2) {
         // add this token to the expected tokens set
-        hint+= LALR1p_matrix_cols[i];
-        if (i < LALR1p_matrix[rowindx].length-1) {
+        hint+= LALR1p_table_cols[i];
+        if (i < LALR1p_table[rowindx].length-1) {
           hint+="    ";
         }
       }
